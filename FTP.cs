@@ -170,6 +170,8 @@ namespace FTP
                             writeResponse(dataReader);
                             sendCommand(dataWriter, "PASS " + pass);
                             writeResponse(dataReader);
+                            sendCommand(dataWriter, "PASV");
+                            writeResponse(dataReader);
                             sendCommand(dataWriter, "LIST");
                             writeResponse(dataReader);
                             dataReader.Close();
