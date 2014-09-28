@@ -166,12 +166,15 @@ namespace FTP
                             dataReader.DiscardBufferedData();
                             sendCommand(writer, "LIST");
                             String line;
+                            String printLine = "";
                             while ((line = dataReader.ReadLine()) != null)
                             {
-                                Console.WriteLine(line);
+                                printLine += line + "\n";
                             }
                             dataReader.Close();
+                            dataConn.Close();
                             writeResponse(reader);
+                            Console.WriteLine(printLine);
                             break;
 
                         case GET:
