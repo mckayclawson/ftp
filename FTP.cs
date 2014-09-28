@@ -161,10 +161,16 @@ namespace FTP
                             break;
 
                         case DIR:
-                            StreamReader dataReader = new StreamReader(conn.GetStream());
+                            TcpClient dataConn = new TcpClient(server, 21);
                             sendCommand(writer, "LIST");
-                            writeResponse(dataReader);
+                            StreamReader dataReader = new StreamReader(dataConn.GetStream());
+                            String line;
+                            while ((line = dataReader.ReadLine()) != null)
+                            {
+                                Console.WriteLine(line);
+                            }
                             dataReader.Close();
+                            writeResponse(reader);
                             break;
 
                         case GET:
