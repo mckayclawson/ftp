@@ -85,25 +85,16 @@ namespace FTP
             }
 
             String server = args[0];
-            StreamReader reader = null;
-            StreamWriter writer = null;
-            try
+            TcpClient conn = new TcpClient(server, 21);
+            Console.WriteLine("Trying " + Dns.GetHostEntry(server).AddressList[0] + "...");
+            if (conn.Connected == true)
             {
-                TcpClient conn = new TcpClient(server, 21);
-                Console.WriteLine("Trying " + Dns.GetHostEntry(server).AddressList[0] + "...");
-                if (conn.Connected == true)
-                {
-                    Console.WriteLine("Connected to " + server);
-                }
-                reader = new StreamReader(conn.GetStream());
-                writeResponse(reader);
-                writer = new StreamWriter(conn.GetStream());
-
+                Console.WriteLine("Connected to " + server);
             }
-            catch (Exception e) 
-            {
+            StreamReader reader = new StreamReader(conn.GetStream());
+            writeResponse(reader);
+            StreamWriter writer = new StreamWriter(conn.GetStream());
 
-            }
             ///StreamReader reader = getStreamReader(server);
             ///if (reader == null)
             ///{
@@ -145,6 +136,7 @@ namespace FTP
                     {
                         case ASCII:
                             writer.WriteLine("TYPE A");
+                            writer.Flush();
                             writeResponse(reader);
                             break;
 
