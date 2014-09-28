@@ -103,6 +103,8 @@ namespace FTP
             writeResponse(reader);
             sendCommand(writer, "PASS " + pass);
             writeResponse(reader);
+            sendCommand(writer, "PASV");
+            writeResponse(reader);
 
             do
             {
