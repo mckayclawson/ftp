@@ -166,10 +166,10 @@ namespace FTP
                             StreamReader dataReader = new StreamReader(dataStream);
                             writeResponse(dataReader);
                             StreamWriter dataWriter = new StreamWriter(dataStream);
-                            sendCommand(writer,"USER " + user);
-                            writeResponse(reader);
-                            sendCommand(writer, "PASS " + pass);
-                            writeResponse(reader);
+                            sendCommand(dataWriter,"USER " + user);
+                            writeResponse(dataReader);
+                            sendCommand(dataWriter, "PASS " + pass);
+                            writeResponse(dataReader);
                             sendCommand(dataWriter, "LIST");
                             writeResponse(dataReader);
                             dataReader.Close();
