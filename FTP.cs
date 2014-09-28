@@ -148,7 +148,7 @@ namespace FTP
 
                         case CD:
                             String path = argv[1];
-                            sendCommand(writer, "CDW " + path);
+                            sendCommand(writer, "CWD " + path);
                             writeResponse(reader);
                             break;
 
@@ -162,9 +162,10 @@ namespace FTP
 
                         case DIR:
                             TcpClient dataConn = new TcpClient(server, 21);
-                            StreamReader dataReader = new StreamReader(dataConn.GetStream());
-                            dataReader.DiscardBufferedData();
+                            Stream dataStream = dataConn.GetStream();
+                            //dataReader.DiscardBufferedData();
                             sendCommand(writer, "LIST");
+                            StreamReader dataReader = new StreamReader(dataStream);
                             String line;
                             String printLine = "";
                             while ((line = dataReader.ReadLine()) != null)
