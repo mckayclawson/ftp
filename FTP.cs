@@ -162,8 +162,9 @@ namespace FTP
 
                         case DIR:
                             TcpClient dataConn = new TcpClient(server, 21);
-                            sendCommand(writer, "LIST");
                             StreamReader dataReader = new StreamReader(dataConn.GetStream());
+                            dataReader.DiscardBufferedData();
+                            sendCommand(writer, "LIST");
                             String line;
                             while ((line = dataReader.ReadLine()) != null)
                             {
