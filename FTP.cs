@@ -163,19 +163,14 @@ namespace FTP
                         case DIR:
                             TcpClient dataConn = new TcpClient(server, 21);
                             Stream dataStream = dataConn.GetStream();
-                            sendCommand(writer, "LIST");
                             StreamReader dataReader = new StreamReader(dataStream);
                             writeResponse(dataReader);
-                            String line;
-                            String printLine = "";
-                            while ((line = dataReader.ReadLine()) != null)
-                            {
-                                printLine += line + "\n";
-                            }
+                            StreamWriter dataWriter = new StreamWriter(dataStream);
+                            sendCommand(dataWriter, "LIST");
+                            writeResponse(dataReader);
                             dataReader.Close();
                             dataConn.Close();
-                            writeResponse(reader);
-                            Console.WriteLine(printLine);
+                            //writeResponse(reader);
                             break;
 
                         case GET:
