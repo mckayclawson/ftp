@@ -95,6 +95,14 @@ namespace FTP
             StreamReader reader = new StreamReader(conn.GetStream());
             StreamWriter writer = new StreamWriter(conn.GetStream());
             writeResponse(reader);
+            Console.Write("Username: ");
+            String user = Console.ReadLine();
+            Console.Write("Password: ");
+            String pass = Console.ReadLine();
+            sendCommand(writer,"USER " + user);
+            writeResponse(reader);
+            sendCommand(writer, "PASS " + pass);
+            writeResponse(reader);
 
             do
             {
