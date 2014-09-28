@@ -84,6 +84,7 @@ namespace FTP
                 Environment.Exit(1);
             }
 
+            //Connect to host and login
             String server = args[0];
             TcpClient conn = new TcpClient(server, 21);
             Console.WriteLine("Trying " + Dns.GetHostEntry(server).AddressList[0] + "...");
@@ -92,18 +93,9 @@ namespace FTP
                 Console.WriteLine("Connected to " + server);
             }
             StreamReader reader = new StreamReader(conn.GetStream());
-            writeResponse(reader);
             StreamWriter writer = new StreamWriter(conn.GetStream());
+            writeResponse(reader);
 
-            ///StreamReader reader = getStreamReader(server);
-            ///if (reader == null)
-            ///{
-            ///    Console.WriteLine("Could not connect to " + server + " on port 21");
-            ///    return;
-            ///}
-
-
-            // Command line is done - accept commands
             do
             {
                 try
@@ -135,27 +127,38 @@ namespace FTP
                     switch (cmd)
                     {
                         case ASCII:
-                            writer.WriteLine("TYPE A");
-                            writer.Flush();
+                            sendCommand(writer, "Type A");
                             writeResponse(reader);
                             break;
 
                         case BINARY:
+                            sendCommand(writer, "Type I");
+                            writeResponse(reader);
                             break;
 
                         case CD:
+                            String path = argv[1];
+                            sendCommand(writer, "CDW " + path);
+                            writeResponse(reader);
                             break;
 
                         case CDUP:
+                            sendCommand(writer, "CDUP");
+                            writeResponse(reader);
                             break;
 
                         case DEBUG:
                             break;
 
                         case DIR:
+                            sendCommand(writer, "LIST");
+                            writeResponse(reader);
                             break;
 
                         case GET:
+                            String fileName = argv[1];
+                            sendCommand(writer, "RETV " + fileName);
+                            writeResponse(reader);
                             break;
 
                         case HELP:
@@ -169,16 +172,25 @@ namespace FTP
                             break;
 
                         case PUT:
+                            ///not listed in the writeup
                             break;
 
                         case PWD:
+                            sendCommand(writer, "PWD");
+                            writeResponse(reader);
                             break;
 
                         case QUIT:
+                            reader.Close();
+                            writer.Close();
+                            conn.Close();
                             eof = true;
                             break;
 
                         case USER:
+                            String userName = argv[1];
+                            sendCommand(writer, "USER " + userName);
+                            writeResponse(reader);
                             break;
 
                         default:
@@ -203,22 +215,10 @@ namespace FTP
                 }
             }
         }
-        
-        static StreamReader getStreamReader(String server){
-            try
-            {
-                TcpClient conn = new TcpClient(server, 21);
-                Console.WriteLine("Trying " + Dns.GetHostEntry(server).AddressList[0] + "...");
-                if (conn.Connected == true)
-                {
-                    Console.WriteLine("Connected to " + server);
-                }
-                return new StreamReader(conn.GetStream());
-            }
-            catch (Exception e) 
-            {
-                return null; 
-            }
+        static void sendCommand(StreamWriter w, String command)
+        {
+            w.WriteLine(command);
+            w.Flush();
         }
     }
 }
