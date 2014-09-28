@@ -88,7 +88,7 @@ namespace FTP
             try
             {
                 TcpClient conn = new TcpClient(server, 21);
-                Console.WriteLine("trying " + Dns.GetHostEntry(server).ToString());
+                Console.WriteLine("trying " + Dns.GetHostEntry(server).AddressList[0]);
                 if(conn.Connected == true)
                 {
                     Console.WriteLine("Connected to " + server);
