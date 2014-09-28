@@ -85,27 +85,20 @@ namespace FTP
             }
 
             String server = args[0];
-            StreamReader reader;
-            StreamWriter writer;
+            StreamReader reader = null;
+            StreamWriter writer = null;
             try
             {
                 TcpClient conn = new TcpClient(server, 21);
-                //Console.WriteLine("Trying " + Dns.GetHostEntry(server).AddressList[0] + "...");
+                Console.WriteLine("Trying " + Dns.GetHostEntry(server).AddressList[0] + "...");
                 if (conn.Connected == true)
                 {
-                    //Console.WriteLine("Connected to " + server);
+                    Console.WriteLine("Connected to " + server);
                 }
                 reader = new StreamReader(conn.GetStream());
+                writeResponse(reader);
                 writer = new StreamWriter(conn.GetStream());
-                while (!reader.EndOfStream)
-                {
-                    Console.WriteLine(reader.ReadLine());
-                }
-                writer.WriteLine("Type A");
-                while (!reader.EndOfStream)
-                {
-                    Console.WriteLine(reader.ReadLine());
-                }
+
             }
             catch (Exception e) 
             {
@@ -151,7 +144,8 @@ namespace FTP
                     switch (cmd)
                     {
                         case ASCII:
-                            //writer.WriteLine("TYPE A");
+                            writer.WriteLine("TYPE A");
+                            writeResponse(reader);
                             break;
 
                         case BINARY:
@@ -201,6 +195,21 @@ namespace FTP
                     }
                 }
             } while (!eof);
+        }
+
+        static void writeResponse(StreamReader r)
+        {
+            while (!r.EndOfStream)
+            {
+                String line = r.ReadLine();
+                Console.WriteLine(line);
+                string[] words = Regex.Split(line, "\\s+");
+                if (!words[0].EndsWith("-"))
+                {
+                    r.DiscardBufferedData();
+                    break;
+                }
+            }
         }
         
         static StreamReader getStreamReader(String server){
