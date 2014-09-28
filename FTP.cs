@@ -161,8 +161,10 @@ namespace FTP
                             break;
 
                         case DIR:
+                            StreamReader dataReader = new StreamReader(conn.GetStream());
                             sendCommand(writer, "LIST");
-                            writeResponse(reader);
+                            writeResponse(dataReader);
+                            dataReader.Close();
                             break;
 
                         case GET:
@@ -191,6 +193,8 @@ namespace FTP
                             break;
 
                         case QUIT:
+                            sendCommand(writer, "QUIT");
+                            writeResponse(reader);
                             reader.Close();
                             writer.Close();
                             conn.Close();
