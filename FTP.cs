@@ -85,17 +85,30 @@ namespace FTP
             }
 
             String server = args[0];
+            StreamReader reader;
+            StreamWriter writer;
             try
             {
                 TcpClient conn = new TcpClient(server, 21);
-                Console.WriteLine("trying " + Dns.GetHostEntry(server).AddressList[0]);
-                if(conn.Connected == true)
+                Console.WriteLine("Trying " + Dns.GetHostEntry(server).AddressList[0] + "...");
+                if (conn.Connected == true)
                 {
                     Console.WriteLine("Connected to " + server);
                 }
-                StreamReader reader = new StreamReader(conn.GetStream());
+                reader = new StreamReader(conn.GetStream());
+                writer = new StreamWriter(conn.GetStream());
+                writer.WriteLine("Type A");
             }
-            catch (Exception e) { }
+            catch (Exception e) 
+            {
+
+            }
+            ///StreamReader reader = getStreamReader(server);
+            ///if (reader == null)
+            ///{
+            ///    Console.WriteLine("Could not connect to " + server + " on port 21");
+            ///    return;
+            ///}
 
 
             // Command line is done - accept commands
@@ -130,6 +143,7 @@ namespace FTP
                     switch (cmd)
                     {
                         case ASCII:
+                            //writer.WriteLine("TYPE A");
                             break;
 
                         case BINARY:
@@ -180,6 +194,22 @@ namespace FTP
                 }
             } while (!eof);
         }
-
+        
+        static StreamReader getStreamReader(String server){
+            try
+            {
+                TcpClient conn = new TcpClient(server, 21);
+                Console.WriteLine("Trying " + Dns.GetHostEntry(server).AddressList[0] + "...");
+                if (conn.Connected == true)
+                {
+                    Console.WriteLine("Connected to " + server);
+                }
+                return new StreamReader(conn.GetStream());
+            }
+            catch (Exception e) 
+            {
+                return null; 
+            }
+        }
     }
 }
