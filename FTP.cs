@@ -138,53 +138,49 @@ namespace FTP
                     {
                         case ASCII:
                             sendCommand(writer, "Type A");
-                            writeResponse(reader);
+                            Console.Write(getResponse(reader));
                             break;
 
                         case BINARY:
                             sendCommand(writer, "Type I");
-                            writeResponse(reader);
+                            Console.Write(getResponse(reader));
                             break;
 
                         case CD:
                             String path = argv[1];
                             sendCommand(writer, "CWD " + path);
-                            writeResponse(reader);
+                            Console.Write(getResponse(reader));
                             break;
 
                         case CDUP:
                             sendCommand(writer, "CDUP");
-                            writeResponse(reader);
+                            Console.Write(getResponse(reader));
                             break;
 
                         case DEBUG:
                             break;
 
                         case DIR:
-                            TcpClient dataConn = new TcpClient(server, 21);
+                            sendCommand(writer, "PASV");
+                            String dataAddress = getResponse(reader);
+                            string[] addressParts = dataAddress.Split("()".ToCharArray())[1].Split(",".ToCharArray());
+                            string dataHost = addressParts[0] + "." + addressParts[1] + "." + addressParts[2] + "." + addressParts[3];
+                            int dataPort = int.Parse(addressParts[4]) * 256 + int.Parse(addressParts[5]);
+                            TcpClient dataConn = new TcpClient(dataHost, dataPort);
                             Stream dataStream = dataConn.GetStream();
+                            sendCommand(writer, "LIST");
                             StreamReader dataReader = new StreamReader(dataStream);
-                            writeResponse(dataReader);
-                            StreamWriter dataWriter = new StreamWriter(dataStream);
-                            sendCommand(dataWriter,"USER " + user);
-                            writeResponse(dataReader);
-                            sendCommand(dataWriter, "PASS " + pass);
-                            writeResponse(dataReader);
-                            sendCommand(dataWriter, "PASV");
-                            writeResponse(dataReader);
-                            sendCommand(dataWriter, "TYPE A");
-                            writeResponse(dataReader);
-                            sendCommand(dataWriter, "LIST");
-                            writeResponse(dataReader);
+                            Console.Write(getResponse(dataReader));
                             dataReader.Close();
+                            dataStream.Close();
                             dataConn.Close();
-                            //writeResponse(reader);
+                            Console.Write(getResponse(reader));
                             break;
 
                         case GET:
                             String fileName = argv[1];
                             sendCommand(writer, "RETV " + fileName);
-                            writeResponse(reader);
+                            Console.Write(getResponse(reader));
                             break;
 
                         case HELP:
@@ -203,12 +199,12 @@ namespace FTP
 
                         case PWD:
                             sendCommand(writer, "PWD");
-                            writeResponse(reader);
+                            Console.Write(getResponse(reader));
                             break;
 
                         case QUIT:
                             sendCommand(writer, "QUIT");
-                            writeResponse(reader);
+                            Console.Write(getResponse(reader));
                             reader.Close();
                             writer.Close();
                             conn.Close();
@@ -218,7 +214,7 @@ namespace FTP
                         case USER:
                             String userName = argv[1];
                             sendCommand(writer, "USER " + userName);
-                            writeResponse(reader);
+                            Console.Write(getResponse(reader));
                             break;
 
                         default:
@@ -229,12 +225,13 @@ namespace FTP
             } while (!eof);
         }
 
-        static void writeResponse(StreamReader r)
+        static String getResponse(StreamReader r)
         {
+            String response = "";
             while (!r.EndOfStream)
             {
                 String line = r.ReadLine();
-                Console.WriteLine(line);
+                response = response + line + "\n";
                 string[] words = Regex.Split(line, "\\s+");
                 if (!words[0].EndsWith("-"))
                 {
@@ -242,6 +239,7 @@ namespace FTP
                     break;
                 }
             }
+            return response;
         }
         static void sendCommand(StreamWriter w, String command)
         {
