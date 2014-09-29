@@ -180,7 +180,17 @@ namespace FTP
                         case PASSIVE:
                             if (isPassive)
                             {
-                                TcpListener portListener = new TcpListener(IPAddress.Any,0);
+                                IPAddress localIP;
+                                IPHostEntry bla = Dns.GetHostEntry(Dns.GetHostName());
+                                foreach (IPAddress ip in bla.AddressList)
+                                {
+                                    if (ip.AddressFamily == AddressFamily.InterNetwork)
+                                    {
+                                        localIP = ip;
+                                    }
+                                }
+                                
+                                TcpListener portListener = new TcpListener(localIP,0);
                                 portListener.Start();
                                 IPEndPoint portEndPoint= (IPEndPoint)portListener.LocalEndpoint;
                                 String ip = portEndPoint.Address.ToString();
@@ -271,7 +281,7 @@ namespace FTP
         {
             String loginResponse = "";
             String loginResponseCode = "";
-            String[] loginResponseList = { };
+            String[] loginResponseList;
             while (loginResponseCode.Equals("230", StringComparison.CurrentCultureIgnoreCase)) ;
             {
                 Console.Write("Username: ");
@@ -284,7 +294,7 @@ namespace FTP
                 loginResponse = getResponse(reader);
                 Console.Write(loginResponse);
                 loginResponseList = Regex.Split(loginResponse, "\\s+");
-                loginResponseCode = "230";
+                loginResponseCode = loginResponseList[0];
             }
         }
 
