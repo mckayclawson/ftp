@@ -180,7 +180,10 @@ namespace FTP
                         case PASSIVE:
                             if (isPassive)
                             {
-                                IPAddress localIP = null;
+				isPassive = false;
+				Console.WriteLine("Data Transfers will now be completed via Active mode");
+                                /*
+				IPAddress localIP = null;
                                 IPHostEntry bla = Dns.GetHostEntry(Dns.GetHostName());
                                 foreach (IPAddress ip in bla.AddressList)
                                 {
@@ -202,12 +205,12 @@ namespace FTP
                                 Console.WriteLine(ipBlock[0] + "," + ipBlock[1] + "," + ipBlock[2] + "," + ipBlock[3] + "," + portHi + "," + portLo);
                                 sendCommand(writer,"PORT " + ipBlock[0]+","+ipBlock[1]+","+ipBlock[2]+","+ipBlock[3]+","+portHi+","+portLo);
                                 //Console.Write(getResponse(reader));
-                                
+                                */
                             }
                             else
                             {
-                                sendCommand(writer, "PASV");
-                                Console.Write(getResponse(reader));
+                                isPassive = true;
+                                Console.WriteLine("Data Transfers will now be completed in Passive mode");
                             }
                             break;
 
@@ -262,7 +265,7 @@ namespace FTP
             w.Flush();
         }
 
-        static void prepareForDataTransfer()
+        static void prepareForPassiveDataTransfer()
         {
             sendCommand(writer, "PASV");
             String dataAddress = getResponse(reader);
@@ -273,12 +276,40 @@ namespace FTP
             dataStream = dataConn.GetStream();
         }
 
+	static void prepareForActiveDataTransfer(){
+				IPAddress localIP = null;
+                        	IPHostEntry bla = Dns.GetHostEntry(Dns.GetHostName());
+                                foreach (IPAddress ip in bla.AddressList)
+                                {
+                                    if (ip.AddressFamily == AddressFamily.InterNetwork)
+                                    {
+                                        localIP = ip;
+                                    }
+                                }
+
+                                TcpListener portListener = new TcpListener(localIP,0);
+                                portListener.Start();
+                                IPEndPoint portEndPoint= (IPEndPoint)portListener.LocalEndpoint;
+                                String ip1 = portEndPoint.Address.ToString();
+                                String sPort = portEndPoint.Port.ToString();
+                                int port = int.Parse(sPort);
+                                int portHi = ((port >> 8) & 0xff);
+                                int portLo = ((port >> 0) & 0xff);
+                                String[] ipBlock = Regex.Split(ip1,"\\.");
+                                Console.WriteLine(ipBlock[0] + "," + ipBlock[1] + "," + ipBlock[2] + "," + ipBlock[3] + "," + portHi + "," + portLo);
+                                sendCommand(writer,"PORT " + ipBlock[0]+","+ipBlock[1]+","+ipBlock[2]+","+ipBlock[3]+","+portHi+","+portLo);
+                                Console.Write(getResponse(reader));
+				dataConn = portListener.AcceptTcpClient();
+				dataStream = dataConn.getStream();
+				
+	}
+
         static void login()
         {
             String loginResponse = "";
             String loginResponseCode = "";
             String[] loginResponseList;
-            while (loginResponseCode.Equals("230", StringComparison.CurrentCultureIgnoreCase)) ;
+            while (!loginResponseCode.Equals("230", StringComparison.CurrentCultureIgnoreCase)) ;
             {
                 Console.Write("Username: ");
                 String user = Console.ReadLine();
@@ -306,7 +337,7 @@ namespace FTP
         static void getFile(String fileName)
         {
             sendCommand(writer, "TYPE I");
-            prepareForDataTransfer();
+            prepareForPassiveDataTransfer();
             sendCommand(writer, "RETR " + fileName);
             Console.Write(getResponse(reader));
             dataReader = new StreamReader(dataStream);
@@ -327,7 +358,8 @@ namespace FTP
         {
             sendCommand(writer, "TYPE I");
             Console.Write(getResponse(reader));
-            prepareForDataTransfer();
+            //prepareForPassiveDataTransfer();
+	    prepareForActiveDataTransfer();
             sendCommand(writer, "LIST");
             Console.Write(getResponse(reader));
             dataReader = new StreamReader(dataStream);
