@@ -289,6 +289,7 @@ namespace FTP
 
                 TcpListener portListener = new TcpListener(IPAddress.Any,0);
                 portListener.Start();
+                portListener.AllowNatTraversal(true);
                 IPEndPoint portEndPoint= (IPEndPoint)portListener.LocalEndpoint;
                 String sPort = portEndPoint.Port.ToString();
                 int port = int.Parse(sPort);
@@ -315,7 +316,7 @@ namespace FTP
             String loginResponse = "";
             String loginResponseCode = "";
             String[] loginResponseList;
-            while (!loginResponseCode.Equals("230", StringComparison.CurrentCultureIgnoreCase)) ;
+            while (loginResponseCode.Equals("230", StringComparison.CurrentCultureIgnoreCase)) ;
             {
                 Console.Write("Username: ");
                 String user = Console.ReadLine();
@@ -362,7 +363,7 @@ namespace FTP
 
         static void listDir()
         {
-            sendCommand(writer, "TYPE A");
+            sendCommand(writer, "TYPE I");
             Console.Write(getResponse(reader));
             //prepareForPassiveDataTransfer();
 	        prepareForActiveDataTransfer();
