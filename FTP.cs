@@ -191,7 +191,10 @@ namespace FTP
                                 String[] ipBlock = Regex.Split(ip,"\\.");
                                 TcpClient clientSocket = portListener.AcceptTcpClient();
                                 sendCommand(writer,"PORT " + ipBlock[0]+","+ipBlock[1]+","+ipBlock[2]+","+ipBlock[3]+","+portHi+","+portLo);
+                                StreamReader pa = new StreamReader(clientSocket.GetStream());
+                                Console.Write(getResponse(pa));
                                 Console.Write(getResponse(reader));
+                                clientSocket.Close();
                             }
                             else
                             {
