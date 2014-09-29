@@ -201,7 +201,7 @@ namespace FTP
                                 String[] ipBlock = Regex.Split(ip1,"\\.");
                                 Console.WriteLine(ipBlock[0] + "," + ipBlock[1] + "," + ipBlock[2] + "," + ipBlock[3] + "," + portHi + "," + portLo);
                                 sendCommand(writer,"PORT " + ipBlock[0]+","+ipBlock[1]+","+ipBlock[2]+","+ipBlock[3]+","+portHi+","+portLo);
-                                Console.Write(getResponse(reader));
+                                //Console.Write(getResponse(reader));
                                 
                             }
                             else
