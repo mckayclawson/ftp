@@ -19,6 +19,8 @@ namespace FTP
         // The prompt
         public const string PROMPT = "FTP> ";
 
+
+        //My Global Readers and Writers
         public static String host;
         public static TcpClient conn;
         public static StreamReader reader;
@@ -26,6 +28,7 @@ namespace FTP
         public static TcpClient dataConn;
         public static Stream dataStream;
         public static StreamReader dataReader;
+        public static Boolean isPassive = true;
         // Information to parse commands
         public static readonly string[] COMMANDS = { "ascii",
 					                                  "binary",
@@ -102,16 +105,7 @@ namespace FTP
             reader = new StreamReader(conn.GetStream());
             writer = new StreamWriter(conn.GetStream());
             Console.Write(getResponse(reader));
-            Console.Write("Username: ");
-            String user = Console.ReadLine();
-            Console.Write("Password: ");
-            String pass = Console.ReadLine();
-            sendCommand(writer,"USER " + user);
-            Console.Write(getResponse(reader));
-            sendCommand(writer, "PASS " + pass);
-            Console.Write(getResponse(reader));
-            sendCommand(writer, "PASV");
-            Console.Write(getResponse(reader));
+            login();
 
             do
             {
@@ -168,40 +162,12 @@ namespace FTP
                             break;
 
                         case DIR:
-                            sendCommand(writer, "TYPE I");
-                            Console.Write(getResponse(reader));
-                            prepareForDataTransfer();
-                            sendCommand(writer, "LIST");
-                            Console.Write(getResponse(reader));
-                            dataReader = new StreamReader(dataStream);
-                            String dirLine;
-                            while ((dirLine = dataReader.ReadLine()) != null)
-                            {
-                                Console.WriteLine(dirLine);
-                            }
-                            dataReader.Close();
-                            dataStream.Close();
-                            dataConn.Close();
-                            Console.Write(getResponse(reader));
+                            listDir();
                             break;
 
                         case GET:
                             String fileName = argv[1];
-                            prepareForDataTransfer();
-                            sendCommand(writer, "RETR " + fileName);
-                            Console.Write(getResponse(reader));
-                            dataReader = new StreamReader(dataStream);
-                            FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write);
-                            byte[] b = new byte[100000];
-                            int n;
-                            while((n = dataStream.Read(b, 0, b.Length)) > 0)
-                            {
-                                fs.Write(b, 0, n);
-                            }
-                            dataReader.Close();
-                            dataStream.Close();
-                            dataConn.Close();
-                            Console.Write(getResponse(reader));
+                            getFile(fileName);
                             break;
 
                         case HELP:
@@ -212,6 +178,26 @@ namespace FTP
                             break;
 
                         case PASSIVE:
+                            if (isPassive)
+                            {
+                                TcpListener portListener = new TcpListener(IPAddress.Any,0);
+                                portListener.Start();
+                                IPEndPoint portEndPoint= (IPEndPoint)portListener.LocalEndpoint;
+                                String ip = portEndPoint.Address.ToString();
+                                String sPort = portEndPoint.Port.ToString();
+                                int port = int.Parse(sPort);
+                                int portHi = ((port >> 8) & 0xff);
+                                int portLo = ((port >> 0) & 0xff);
+                                String[] ipBlock = Regex.Split(ip,"\\.");
+                                TcpClient clientSocket = portListener.AcceptTcpClient();
+                                sendCommand(writer,"PORT " + ipBlock[0]+","+ipBlock[1]+","+ipBlock[2]+","+ipBlock[3]+","+portHi+","+portLo);
+                                Console.Write(getResponse(reader));
+                            }
+                            else
+                            {
+                                sendCommand(writer, "PASV");
+                                Console.Write(getResponse(reader));
+                            }
                             break;
 
                         case PUT:
@@ -224,11 +210,7 @@ namespace FTP
                             break;
 
                         case QUIT:
-                            sendCommand(writer, "QUIT");
-                            Console.Write(getResponse(reader));
-                            reader.Close();
-                            writer.Close();
-                            conn.Close();
+                            logout();
                             eof = true;
                             break;
 
@@ -278,6 +260,75 @@ namespace FTP
             int dataPort = int.Parse(addressParts[4]) * 256 + int.Parse(addressParts[5]);
             dataConn = new TcpClient(dataHost, dataPort);
             dataStream = dataConn.GetStream();
+        }
+
+        static void login()
+        {
+            String loginResponse = "";
+            String loginResponseCode = "";
+            String[] loginResponseList = { };
+            while (loginResponseCode.Equals("230", StringComparison.CurrentCultureIgnoreCase)) ;
+            {
+                Console.Write("Username: ");
+                String user = Console.ReadLine();
+                Console.Write("Password: ");
+                String pass = Console.ReadLine();
+                sendCommand(writer, "USER " + user);
+                Console.Write(getResponse(reader));
+                sendCommand(writer, "PASS " + pass);
+                loginResponse = getResponse(reader);
+                Console.Write(loginResponse);
+                loginResponseList = Regex.Split(loginResponse, "\\s+");
+                loginResponseCode = "230";
+            }
+        }
+
+        static void logout()
+        {
+            sendCommand(writer, "QUIT");
+            Console.Write(getResponse(reader));
+            reader.Close();
+            writer.Close();
+            conn.Close();
+        }
+
+        static void getFile(String fileName)
+        {
+            sendCommand(writer, "TYPE I");
+            prepareForDataTransfer();
+            sendCommand(writer, "RETR " + fileName);
+            Console.Write(getResponse(reader));
+            dataReader = new StreamReader(dataStream);
+            FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write);
+            byte[] b = new byte[100000];
+            int n;
+            while ((n = dataStream.Read(b, 0, b.Length)) > 0)
+            {
+                fs.Write(b, 0, n);
+            }
+            dataReader.Close();
+            dataStream.Close();
+            dataConn.Close();
+            Console.Write(getResponse(reader));
+        }
+
+        static void listDir()
+        {
+            sendCommand(writer, "TYPE I");
+            Console.Write(getResponse(reader));
+            prepareForDataTransfer();
+            sendCommand(writer, "LIST");
+            Console.Write(getResponse(reader));
+            dataReader = new StreamReader(dataStream);
+            String dirLine;
+            while ((dirLine = dataReader.ReadLine()) != null)
+            {
+                Console.WriteLine(dirLine);
+            }
+            dataReader.Close();
+            dataStream.Close();
+            dataConn.Close();
+            Console.Write(getResponse(reader));
         }
     }
 }
