@@ -180,7 +180,7 @@ namespace FTP
                         case PASSIVE:
                             if (isPassive)
                             {
-                                IPAddress localIP;
+                                IPAddress localIP = null;
                                 IPHostEntry bla = Dns.GetHostEntry(Dns.GetHostName());
                                 foreach (IPAddress ip in bla.AddressList)
                                 {
@@ -193,12 +193,12 @@ namespace FTP
                                 TcpListener portListener = new TcpListener(localIP,0);
                                 portListener.Start();
                                 IPEndPoint portEndPoint= (IPEndPoint)portListener.LocalEndpoint;
-                                String ip = portEndPoint.Address.ToString();
+                                String ip1 = portEndPoint.Address.ToString();
                                 String sPort = portEndPoint.Port.ToString();
                                 int port = int.Parse(sPort);
                                 int portHi = ((port >> 8) & 0xff);
                                 int portLo = ((port >> 0) & 0xff);
-                                String[] ipBlock = Regex.Split(ip,"\\.");
+                                String[] ipBlock = Regex.Split(ip1,"\\.");
                                 Console.WriteLine(ipBlock[0] + "," + ipBlock[1] + "," + ipBlock[2] + "," + ipBlock[3] + "," + portHi + "," + portLo);
                                 sendCommand(writer,"PORT " + ipBlock[0]+","+ipBlock[1]+","+ipBlock[2]+","+ipBlock[3]+","+portHi+","+portLo);
                                 //TcpClient clientSocket = portListener.AcceptTcpClient();
