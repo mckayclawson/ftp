@@ -19,20 +19,27 @@ namespace FTP
         // The prompt
         public const string PROMPT = "FTP> ";
 
+        public static String host;
+        public static TcpClient conn;
+        public static StreamReader reader;
+        public static StreamWriter writer;
+        public static TcpClient dataConn;
+        public static Stream dataStream;
+        public static StreamReader dataReader;
         // Information to parse commands
         public static readonly string[] COMMANDS = { "ascii",
-					      "binary",
-					      "cd",
-					      "cdup",
-					      "debug",
-					      "dir",
-					      "get",
-					      "help",
-					      "passive",
-                          "put",
-                          "pwd",
-                          "quit",
-                          "user" };
+					                                  "binary",
+					                                  "cd",
+					                                  "cdup",
+					                                  "debug",
+					                                  "dir",
+					                                  "get",
+					                                  "help",
+					                                  "passive",
+                                                      "put",
+                                                      "pwd",
+                                                      "quit",
+                                                      "user" };
 
         public const int ASCII = 0;
         public const int BINARY = 1;
@@ -51,20 +58,20 @@ namespace FTP
         // Help message
 
         public static readonly String[] HELP_MESSAGE = {
-	"ascii      --> Set ASCII transfer type",
-	"binary     --> Set binary transfer type",
-	"cd <path>  --> Change the remote working directory",
-	"cdup       --> Change the remote working directory to the",
-        "               parent directory (i.e., cd ..)",
-	"debug      --> Toggle debug mode",
-	"dir        --> List the contents of the remote directory",
-	"get path   --> Get a remote file",
-	"help       --> Displays this text",
-	"passive    --> Toggle passive/active mode",
-    "put path   --> Transfer the specified file to the server",
-	"pwd        --> Print the working directory on the server",
-    "quit       --> Close the connection to the server and terminate",
-	"user login --> Specify the user name (will prompt for password" };
+	            "ascii      --> Set ASCII transfer type",
+	            "binary     --> Set binary transfer type",
+	            "cd <path>  --> Change the remote working directory",
+	            "cdup       --> Change the remote working directory to the",
+                    "               parent directory (i.e., cd ..)",
+	            "debug      --> Toggle debug mode",
+	            "dir        --> List the contents of the remote directory",
+	            "get path   --> Get a remote file",
+	            "help       --> Displays this text",
+	            "passive    --> Toggle passive/active mode",
+                "put path   --> Transfer the specified file to the server",
+	            "pwd        --> Print the working directory on the server",
+                "quit       --> Close the connection to the server and terminate",
+	            "user login --> Specify the user name (will prompt for password" };
 
 
 
@@ -85,15 +92,15 @@ namespace FTP
             }
 
             //Connect to host and login
-            String server = args[0];
-            TcpClient conn = new TcpClient(server, 21);
-            Console.WriteLine("Trying " + Dns.GetHostEntry(server).AddressList[0] + "...");
+            host = args[0];
+            conn = new TcpClient(host, 21);
+            Console.WriteLine("Trying " + Dns.GetHostEntry(host).AddressList[0] + "...");
             if (conn.Connected == true)
             {
-                Console.WriteLine("Connected to " + server);
+                Console.WriteLine("Connected to " + host);
             }
-            StreamReader reader = new StreamReader(conn.GetStream());
-            StreamWriter writer = new StreamWriter(conn.GetStream());
+            reader = new StreamReader(conn.GetStream());
+            writer = new StreamWriter(conn.GetStream());
             Console.Write(getResponse(reader));
             Console.Write("Username: ");
             String user = Console.ReadLine();
@@ -161,20 +168,16 @@ namespace FTP
                             break;
 
                         case DIR:
-                            sendCommand(writer, "PASV");
-                            String dataAddress = getResponse(reader);
-                            string[] addressParts = dataAddress.Split("()".ToCharArray())[1].Split(",".ToCharArray());
-                            string dataHost = addressParts[0] + "." + addressParts[1] + "." + addressParts[2] + "." + addressParts[3];
-                            int dataPort = int.Parse(addressParts[4]) * 256 + int.Parse(addressParts[5]);
-                            TcpClient dataConn = new TcpClient(dataHost, dataPort);
-                            Stream dataStream = dataConn.GetStream();
+                            sendCommand(writer, "TYPE I");
+                            Console.Write(getResponse(reader));
+                            prepareForDataTransfer();
                             sendCommand(writer, "LIST");
                             Console.Write(getResponse(reader));
-                            StreamReader dataReader = new StreamReader(dataStream);
-                            String line;
-                            while ((line = dataReader.ReadLine()) != null)
+                            dataReader = new StreamReader(dataStream);
+                            String dirLine;
+                            while ((dirLine = dataReader.ReadLine()) != null)
                             {
-                                Console.WriteLine(line);
+                                Console.WriteLine(dirLine);
                             }
                             dataReader.Close();
                             dataStream.Close();
@@ -184,7 +187,20 @@ namespace FTP
 
                         case GET:
                             String fileName = argv[1];
-                            sendCommand(writer, "RETV " + fileName);
+                            prepareForDataTransfer();
+                            sendCommand(writer, "RETR " + fileName);
+                            Console.Write(getResponse(reader));
+                            dataReader = new StreamReader(dataStream);
+                            FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write);
+                            byte[] b = new byte[100000];
+                            int n;
+                            while((n = dataStream.Read(b, 0, b.Length)) > 0)
+                            {
+                                fs.Write(b, 0, n);
+                            }
+                            dataReader.Close();
+                            dataStream.Close();
+                            dataConn.Close();
                             Console.Write(getResponse(reader));
                             break;
 
@@ -246,10 +262,22 @@ namespace FTP
             }
             return response;
         }
+
         static void sendCommand(StreamWriter w, String command)
         {
             w.WriteLine(command);
             w.Flush();
+        }
+
+        static void prepareForDataTransfer()
+        {
+            sendCommand(writer, "PASV");
+            String dataAddress = getResponse(reader);
+            string[] addressParts = dataAddress.Split("()".ToCharArray())[1].Split(",".ToCharArray());
+            string dataHost = addressParts[0] + "." + addressParts[1] + "." + addressParts[2] + "." + addressParts[3];
+            int dataPort = int.Parse(addressParts[4]) * 256 + int.Parse(addressParts[5]);
+            dataConn = new TcpClient(dataHost, dataPort);
+            dataStream = dataConn.GetStream();
         }
     }
 }
