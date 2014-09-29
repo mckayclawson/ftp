@@ -26,7 +26,7 @@ namespace FTP
         public static StreamReader reader;
         public static StreamWriter writer;
         public static TcpClient dataConn;
-        public static Stream dataStream;
+        public static NetworkStream dataStream;
         public static StreamReader dataReader;
         public static Boolean isPassive = true;
         // Information to parse commands
@@ -180,10 +180,10 @@ namespace FTP
                         case PASSIVE:
                             if (isPassive)
                             {
-				isPassive = false;
-				Console.WriteLine("Data Transfers will now be completed via Active mode");
+				                isPassive = false;
+				                Console.WriteLine("Data Transfers will now be completed via Active mode");
                                 /*
-				IPAddress localIP = null;
+				                IPAddress localIP = null;
                                 IPHostEntry bla = Dns.GetHostEntry(Dns.GetHostName());
                                 foreach (IPAddress ip in bla.AddressList)
                                 {
@@ -276,33 +276,39 @@ namespace FTP
             dataStream = dataConn.GetStream();
         }
 
-	static void prepareForActiveDataTransfer(){
+	    static void prepareForActiveDataTransfer(){
 				IPAddress localIP = null;
-                        	IPHostEntry bla = Dns.GetHostEntry(Dns.GetHostName());
-                                foreach (IPAddress ip in bla.AddressList)
-                                {
-                                    if (ip.AddressFamily == AddressFamily.InterNetwork)
-                                    {
-                                        localIP = ip;
-                                    }
-                                }
+                IPHostEntry bla = Dns.GetHostEntry(Dns.GetHostName());
+                foreach (IPAddress ip in bla.AddressList)
+                {
+                    if (ip.AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        localIP = ip;
+                    }
+                }
 
-                                TcpListener portListener = new TcpListener(localIP,0);
-                                portListener.Start();
-                                IPEndPoint portEndPoint= (IPEndPoint)portListener.LocalEndpoint;
-                                String ip1 = portEndPoint.Address.ToString();
-                                String sPort = portEndPoint.Port.ToString();
-                                int port = int.Parse(sPort);
-                                int portHi = ((port >> 8) & 0xff);
-                                int portLo = ((port >> 0) & 0xff);
-                                String[] ipBlock = Regex.Split(ip1,"\\.");
-                                Console.WriteLine(ipBlock[0] + "," + ipBlock[1] + "," + ipBlock[2] + "," + ipBlock[3] + "," + portHi + "," + portLo);
-                                sendCommand(writer,"PORT " + ipBlock[0]+","+ipBlock[1]+","+ipBlock[2]+","+ipBlock[3]+","+portHi+","+portLo);
-                                Console.Write(getResponse(reader));
-				dataConn = portListener.AcceptTcpClient();
-				dataStream = dataConn.getStream();
+                TcpListener portListener = new TcpListener(IPAddress.Any,0);
+                portListener.Start();
+                IPEndPoint portEndPoint= (IPEndPoint)portListener.LocalEndpoint;
+                String sPort = portEndPoint.Port.ToString();
+                int port = int.Parse(sPort);
+                int portHi = ((port >> 8) & 0xff);
+                int portLo = ((port >> 0) & 0xff);
+                String[] ipBlock = Regex.Split(localIP.ToString(),"\\.");
+                Console.WriteLine(ipBlock[0] + "," + ipBlock[1] + "," + ipBlock[2] + "," + ipBlock[3] + "," + portHi + "," + portLo);
+                sendCommand(writer,"PORT " + ipBlock[0]+","+ipBlock[1]+","+ipBlock[2]+","+ipBlock[3]+","+portHi+","+portLo);
+                Console.Write(getResponse(reader));
+                while (true)
+                {
+                    dataConn = portListener.AcceptTcpClient();
+                    if (dataConn.Connected)
+                    {
+                        dataStream = dataConn.GetStream();
+                        break;
+                    }
+                }
 				
-	}
+	    }
 
         static void login()
         {
@@ -356,10 +362,10 @@ namespace FTP
 
         static void listDir()
         {
-            sendCommand(writer, "TYPE I");
+            sendCommand(writer, "TYPE A");
             Console.Write(getResponse(reader));
             //prepareForPassiveDataTransfer();
-	    prepareForActiveDataTransfer();
+	        prepareForActiveDataTransfer();
             sendCommand(writer, "LIST");
             Console.Write(getResponse(reader));
             dataReader = new StreamReader(dataStream);
