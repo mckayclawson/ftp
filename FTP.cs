@@ -190,6 +190,7 @@ namespace FTP
                                 int portLo = ((port >> 0) & 0xff);
                                 String[] ipBlock = Regex.Split(ip,"\\.");
                                 TcpClient clientSocket = portListener.AcceptTcpClient();
+                                Console.WriteLine(ipBlock[0] + "," + ipBlock[1] + "," + ipBlock[2] + "," + ipBlock[3] + "," + portHi + "," + portLo);
                                 sendCommand(writer,"PORT " + ipBlock[0]+","+ipBlock[1]+","+ipBlock[2]+","+ipBlock[3]+","+portHi+","+portLo);
                                 StreamReader pa = new StreamReader(clientSocket.GetStream());
                                 Console.Write(getResponse(pa));
