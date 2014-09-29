@@ -169,8 +169,13 @@ namespace FTP
                             TcpClient dataConn = new TcpClient(dataHost, dataPort);
                             Stream dataStream = dataConn.GetStream();
                             sendCommand(writer, "LIST");
+                            Console.Write(getResponse(reader));
                             StreamReader dataReader = new StreamReader(dataStream);
-                            Console.Write(getResponse(dataReader));
+                            String line;
+                            while ((line = dataReader.ReadLine()) != null)
+                            {
+                                Console.WriteLine(line);
+                            }
                             dataReader.Close();
                             dataStream.Close();
                             dataConn.Close();
