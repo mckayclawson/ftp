@@ -126,6 +126,11 @@ namespace FTP
                 // Keep going if we have not hit end of file
                 if (!eof && input.Length > 0)
                 {
+                    if (!conn.Connected)
+                    {
+                        Console.WriteLine("The connection seems to have timed out,");
+                        eof = true;
+                    }
                     int cmd = -1;
                     string[] argv = Regex.Split(input, "\\s+");
 
@@ -338,7 +343,7 @@ namespace FTP
             String loginResponse = "";
             String loginResponseCode = "";
             String[] loginResponseList;
-            while (!loginResponseCode.Equals("230", StringComparison.CurrentCultureIgnoreCase))
+            while (!loginResponseCode.Equals("230"))
             {
                 Console.Write("Username: ");
                 String user = Console.ReadLine();
