@@ -20,7 +20,7 @@ namespace FTP
         public const string PROMPT = "FTP> ";
 
 
-        //My Global Readers and Writers
+        //My Global Readers and Writers and a few other helpful global vars
         public static String host;
         public static Boolean binary;
         public static Boolean debug = false;
@@ -81,7 +81,8 @@ namespace FTP
 
 
 
-
+        /*
+         * main method to run the FTP Client*/
         static void Main(string[] args)
         {
             //Scanner in = new Scanner( System.in );
@@ -232,6 +233,9 @@ namespace FTP
             } while (!eof);
         }
 
+        /* method to return the response
+         * of a writer call
+         * */
         static String getResponse(StreamReader r)
         {
             String response = "";
@@ -252,7 +256,11 @@ namespace FTP
             }
             return response;
         }
-
+        /*
+         * Sends the command to the controlStream
+         * and flushes the writer
+         * 
+         */ 
         static void sendCommand(StreamWriter w, String command)
         {
             if (debug)
@@ -263,6 +271,11 @@ namespace FTP
             w.Flush();
         }
 
+        /*
+         * Puts the client is passive mode
+         * parses the address returns by the server and
+         * creates a new data stream
+         * */
         static void prepareForPassiveDataTransfer()
         {
             sendCommand(writer, "PASV");
@@ -277,7 +290,8 @@ namespace FTP
             dataConn = new TcpClient(dataHost, dataPort);
             dataStream = dataConn.GetStream();
         }
-        /*
+
+        /* I wished this would work
 	    static void prepareForActiveDataTransfer(){
 				IPAddress localIP = null;
                 IPHostEntry bla = Dns.GetHostEntry(Dns.GetHostName());
@@ -313,6 +327,12 @@ namespace FTP
 				
 	    }
         */
+
+        /*
+         * Iterative login method so
+         * the program doesn't just hang
+         * when you fail the login
+         * */
         static void login()
         {
             String loginResponse = "";
@@ -334,6 +354,10 @@ namespace FTP
             } 
         }
 
+        /* method to send the QUIT command 
+         * and close all of the stream
+         * 
+         * */
         static void logout()
         {
             sendCommand(writer, "QUIT");
@@ -343,6 +367,11 @@ namespace FTP
             conn.Close();
         }
 
+
+        /* gets a file from the server
+         * or tells you that it cant get the file
+         * Can be in either Ascii or Binary form
+         * */
         static void getFile(String fileName)
         {
             if (binary)
@@ -369,6 +398,7 @@ namespace FTP
                 }
                 catch (Exception e)
                 {
+                    Console.WriteLine("Exception " + e.GetType().ToString());
                     Console.WriteLine("Could not get the file");
                 }
 
@@ -404,6 +434,9 @@ namespace FTP
  
         }
 
+        /*modular function to list the contents of the 
+         * working directory
+         * */
         static void listDir()
         {
             sendCommand(writer, "TYPE I");
