@@ -354,7 +354,7 @@ namespace FTP
                     prepareForPassiveDataTransfer();
                     sendCommand(writer, "RETR " + fileName);
                     Console.Write(getResponse(reader));
-                    dataReader = new StreamReader(dataStream);
+                    dataReader = new StreamReader(dataStream, System.Text.Encoding.Default);
                     FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write);
                     byte[] b = new byte[100000];
                     int n;
@@ -382,7 +382,7 @@ namespace FTP
                     prepareForPassiveDataTransfer();
                     sendCommand(writer, "RETR " + fileName);
                     Console.Write(getResponse(reader));
-                    dataReader = new StreamReader(dataStream);
+                    dataReader = new StreamReader(dataStream, System.Text.Encoding.Default);
                     StreamWriter sw = new StreamWriter(fileName, false);
                     string line;
                     while ((line = dataReader.ReadLine()) != null)
