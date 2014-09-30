@@ -343,12 +343,24 @@ namespace FTP
             String loginResponse = "";
             String loginResponseCode = "";
             String[] loginResponseList;
+            Console.Write("Username: ");
+            String user = Console.ReadLine();
+            Console.Write("Password: ");
+            String pass = Console.ReadLine();
+            sendCommand(writer, "USER " + user);
+            Console.Write(getResponse(reader));
+            sendCommand(writer, "PASS " + pass);
+            loginResponse = getResponse(reader);
+            Console.Write(loginResponse);
+            loginResponseList = Regex.Split(loginResponse, "\\s+");
+            loginResponseCode = loginResponseList[0];
+
             while (!loginResponseCode.Equals("230"))
             {
                 Console.Write("Username: ");
-                String user = Console.ReadLine();
+                user = Console.ReadLine();
                 Console.Write("Password: ");
-                String pass = Console.ReadLine();
+                pass = Console.ReadLine();
                 sendCommand(writer, "USER " + user);
                 Console.Write(getResponse(reader));
                 sendCommand(writer, "PASS " + pass);
