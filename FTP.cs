@@ -389,6 +389,7 @@ namespace FTP
                     {
                         sw.WriteLine(line);
                     }
+                    sw.Close();
                     dataReader.Close();
                     dataStream.Close();
                     dataConn.Close();
