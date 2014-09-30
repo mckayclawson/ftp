@@ -182,30 +182,6 @@ namespace FTP
                             {
 				                isPassive = false;
 				                Console.WriteLine("Data Transfers will now be completed via Active mode");
-                                /*
-				                IPAddress localIP = null;
-                                IPHostEntry bla = Dns.GetHostEntry(Dns.GetHostName());
-                                foreach (IPAddress ip in bla.AddressList)
-                                {
-                                    if (ip.AddressFamily == AddressFamily.InterNetwork)
-                                    {
-                                        localIP = ip;
-                                    }
-                                }
-                                
-                                TcpListener portListener = new TcpListener(localIP,0);
-                                portListener.Start();
-                                IPEndPoint portEndPoint= (IPEndPoint)portListener.LocalEndpoint;
-                                String ip1 = portEndPoint.Address.ToString();
-                                String sPort = portEndPoint.Port.ToString();
-                                int port = int.Parse(sPort);
-                                int portHi = ((port >> 8) & 0xff);
-                                int portLo = ((port >> 0) & 0xff);
-                                String[] ipBlock = Regex.Split(ip1,"\\.");
-                                Console.WriteLine(ipBlock[0] + "," + ipBlock[1] + "," + ipBlock[2] + "," + ipBlock[3] + "," + portHi + "," + portLo);
-                                sendCommand(writer,"PORT " + ipBlock[0]+","+ipBlock[1]+","+ipBlock[2]+","+ipBlock[3]+","+portHi+","+portLo);
-                                //Console.Write(getResponse(reader));
-                                */
                             }
                             else
                             {
@@ -289,7 +265,6 @@ namespace FTP
 
                 TcpListener portListener = new TcpListener(IPAddress.Any,0);
                 portListener.Start();
-                portListener.AllowNatTraversal(true);
                 IPEndPoint portEndPoint= (IPEndPoint)portListener.LocalEndpoint;
                 String sPort = portEndPoint.Port.ToString();
                 int port = int.Parse(sPort);
@@ -297,7 +272,8 @@ namespace FTP
                 int portLo = ((port >> 0) & 0xff);
                 String[] ipBlock = Regex.Split(localIP.ToString(),"\\.");
                 Console.WriteLine(ipBlock[0] + "," + ipBlock[1] + "," + ipBlock[2] + "," + ipBlock[3] + "," + portHi + "," + portLo);
-                sendCommand(writer,"PORT " + ipBlock[0]+","+ipBlock[1]+","+ipBlock[2]+","+ipBlock[3]+","+portHi+","+portLo);
+                String command = "PORT " + ipBlock[0] + "," + ipBlock[1] + "," + ipBlock[2] + "," + ipBlock[3] + "," + portHi + "," + portLo;
+                sendCommand(writer,command);
                 Console.Write(getResponse(reader));
                 while (true)
                 {
