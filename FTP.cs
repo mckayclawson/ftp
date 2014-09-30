@@ -22,6 +22,7 @@ namespace FTP
 
         //My Global Readers and Writers
         public static String host;
+        public static Boolean binary;
         public static TcpClient conn;
         public static StreamReader reader;
         public static StreamWriter writer;
@@ -95,6 +96,7 @@ namespace FTP
             }
 
             //Connect to host and login
+            binary = true;
             host = args[0];
             conn = new TcpClient(host, 21);
             Console.WriteLine("Trying " + Dns.GetHostEntry(host).AddressList[0] + "...");
@@ -138,13 +140,11 @@ namespace FTP
                     switch (cmd)
                     {
                         case ASCII:
-                            sendCommand(writer, "Type A");
-                            Console.Write(getResponse(reader));
+                            binary = false;
                             break;
 
                         case BINARY:
-                            sendCommand(writer, "Type I");
-                            Console.Write(getResponse(reader));
+                            binary = true;
                             break;
 
                         case CD:
@@ -251,7 +251,7 @@ namespace FTP
             dataConn = new TcpClient(dataHost, dataPort);
             dataStream = dataConn.GetStream();
         }
-
+        /*
 	    static void prepareForActiveDataTransfer(){
 				IPAddress localIP = null;
                 IPHostEntry bla = Dns.GetHostEntry(Dns.GetHostName());
@@ -286,7 +286,7 @@ namespace FTP
                 }
 				
 	    }
-
+        */
         static void login()
         {
             String loginResponse = "";
@@ -319,30 +319,53 @@ namespace FTP
 
         static void getFile(String fileName)
         {
-            sendCommand(writer, "TYPE I");
-            prepareForPassiveDataTransfer();
-            sendCommand(writer, "RETR " + fileName);
-            Console.Write(getResponse(reader));
-            dataReader = new StreamReader(dataStream);
-            FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write);
-            byte[] b = new byte[100000];
-            int n;
-            while ((n = dataStream.Read(b, 0, b.Length)) > 0)
+            if (binary)
             {
-                fs.Write(b, 0, n);
+                sendCommand(writer, "TYPE I");
+                prepareForPassiveDataTransfer();
+                sendCommand(writer, "RETR " + fileName);
+                Console.Write(getResponse(reader));
+                dataReader = new StreamReader(dataStream);
+                FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write);
+                byte[] b = new byte[100000];
+                int n;
+                while ((n = dataStream.Read(b, 0, b.Length)) > 0)
+                {
+                    fs.Write(b, 0, n);
+                }
+                dataReader.Close();
+                dataStream.Close();
+                dataConn.Close();
+                Console.Write(getResponse(reader));
             }
-            dataReader.Close();
-            dataStream.Close();
-            dataConn.Close();
-            Console.Write(getResponse(reader));
+            else
+            {
+                sendCommand(writer, "TYPE A");
+                prepareForPassiveDataTransfer();
+                sendCommand(writer, "RETR " + fileName);
+                Console.Write(getResponse(reader));
+                dataReader = new StreamReader(dataStream);
+                StreamWriter sw = new StreamWriter(fileName, false);
+                string line;
+                while ((line = dataReader.ReadLine()) != null)
+                {
+                    sw.WriteLine(line);
+                }
+                dataReader.Close();
+                dataStream.Close();
+                dataConn.Close();
+                Console.Write(getResponse(reader));
+
+            }
+ 
         }
 
         static void listDir()
         {
             sendCommand(writer, "TYPE I");
             Console.Write(getResponse(reader));
-            //prepareForPassiveDataTransfer();
-	        prepareForActiveDataTransfer();
+            prepareForPassiveDataTransfer();
+	        //prepareForActiveDataTransfer();
             sendCommand(writer, "LIST");
             Console.Write(getResponse(reader));
             dataReader = new StreamReader(dataStream);
