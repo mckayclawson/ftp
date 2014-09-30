@@ -23,6 +23,7 @@ namespace FTP
         //My Global Readers and Writers
         public static String host;
         public static Boolean binary;
+        public static Boolean debug = false;
         public static TcpClient conn;
         public static StreamReader reader;
         public static StreamWriter writer;
@@ -141,9 +142,11 @@ namespace FTP
                     {
                         case ASCII:
                             binary = false;
+                            Console.WriteLine("data will now be transfered in ascii");
                             break;
 
                         case BINARY:
+                            Console.WriteLine("data will now be transfered in binary");
                             binary = true;
                             break;
 
@@ -159,6 +162,17 @@ namespace FTP
                             break;
 
                         case DEBUG:
+                            if (debug)
+                            {
+                                debug = false;
+                                Console.WriteLine("debugger mode turned off");
+                            }
+                            else
+                            {
+                                debug = true;
+                                Console.WriteLine("debugger mode turned on");
+                            }
+                            
                             break;
 
                         case DIR:
@@ -232,11 +246,19 @@ namespace FTP
                     break;
                 }
             }
+            if (debug)
+            {
+                Console.WriteLine("inside of getResponse and the response is: " + response);
+            }
             return response;
         }
 
         static void sendCommand(StreamWriter w, String command)
         {
+            if (debug)
+            {
+                Console.WriteLine("inside of sendCommand and the command is: " + command);
+            }
             w.WriteLine(command);
             w.Flush();
         }
@@ -248,6 +270,10 @@ namespace FTP
             string[] addressParts = dataAddress.Split("()".ToCharArray())[1].Split(",".ToCharArray());
             string dataHost = addressParts[0] + "." + addressParts[1] + "." + addressParts[2] + "." + addressParts[3];
             int dataPort = int.Parse(addressParts[4]) * 256 + int.Parse(addressParts[5]);
+            if (debug)
+            {
+                Console.WriteLine("inside of prepareForPassiveDataTransfer and the the dataConn is being made with: " + dataHost + " port " + dataPort);
+            }
             dataConn = new TcpClient(dataHost, dataPort);
             dataStream = dataConn.GetStream();
         }
@@ -292,7 +318,7 @@ namespace FTP
             String loginResponse = "";
             String loginResponseCode = "";
             String[] loginResponseList;
-            while (loginResponseCode.Equals("230", StringComparison.CurrentCultureIgnoreCase)) ;
+            do
             {
                 Console.Write("Username: ");
                 String user = Console.ReadLine();
@@ -305,7 +331,7 @@ namespace FTP
                 Console.Write(loginResponse);
                 loginResponseList = Regex.Split(loginResponse, "\\s+");
                 loginResponseCode = loginResponseList[0];
-            }
+            } while (!loginResponseCode.Equals("230", StringComparison.CurrentCultureIgnoreCase));
         }
 
         static void logout()
@@ -321,42 +347,57 @@ namespace FTP
         {
             if (binary)
             {
-                sendCommand(writer, "TYPE I");
-                Console.WriteLine(getResponse(reader));
-                prepareForPassiveDataTransfer();
-                sendCommand(writer, "RETR " + fileName);
-                Console.Write(getResponse(reader));
-                dataReader = new StreamReader(dataStream);
-                FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write);
-                byte[] b = new byte[100000];
-                int n;
-                while ((n = dataStream.Read(b, 0, b.Length)) > 0)
+                try
                 {
-                    fs.Write(b, 0, n);
+                    sendCommand(writer, "TYPE I");
+                    Console.WriteLine(getResponse(reader));
+                    prepareForPassiveDataTransfer();
+                    sendCommand(writer, "RETR " + fileName);
+                    Console.Write(getResponse(reader));
+                    dataReader = new StreamReader(dataStream);
+                    FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write);
+                    byte[] b = new byte[100000];
+                    int n;
+                    while ((n = dataStream.Read(b, 0, b.Length)) > 0)
+                    {
+                        fs.Write(b, 0, n);
+                    }
+                    dataReader.Close();
+                    dataStream.Close();
+                    dataConn.Close();
+                    Console.Write(getResponse(reader));
                 }
-                dataReader.Close();
-                dataStream.Close();
-                dataConn.Close();
-                Console.Write(getResponse(reader));
+                catch (Exception e)
+                {
+                    Console.WriteLine("Could not get the file");
+                }
+
             }
             else
             {
-                sendCommand(writer, "TYPE A");
-                Console.WriteLine(getResponse(reader));
-                prepareForPassiveDataTransfer();
-                sendCommand(writer, "RETR " + fileName);
-                Console.Write(getResponse(reader));
-                dataReader = new StreamReader(dataStream);
-                StreamWriter sw = new StreamWriter(fileName, false);
-                string line;
-                while ((line = dataReader.ReadLine()) != null)
+                try
                 {
-                    sw.WriteLine(line);
+                    sendCommand(writer, "TYPE A");
+                    Console.WriteLine(getResponse(reader));
+                    prepareForPassiveDataTransfer();
+                    sendCommand(writer, "RETR " + fileName);
+                    Console.Write(getResponse(reader));
+                    dataReader = new StreamReader(dataStream);
+                    StreamWriter sw = new StreamWriter(fileName, false);
+                    string line;
+                    while ((line = dataReader.ReadLine()) != null)
+                    {
+                        sw.WriteLine(line);
+                    }
+                    dataReader.Close();
+                    dataStream.Close();
+                    dataConn.Close();
+                    Console.Write(getResponse(reader));
                 }
-                dataReader.Close();
-                dataStream.Close();
-                dataConn.Close();
-                Console.Write(getResponse(reader));
+                catch (Exception e)
+                {
+                    Console.WriteLine("Could not get the file");
+                }
 
             }
  
