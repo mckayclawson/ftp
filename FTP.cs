@@ -120,6 +120,7 @@ namespace FTP
                 }
                 catch (Exception e)
                 {
+                    Console.WriteLine("Exception " + e.GetType().ToString());
                     eof = true;
                 }
 
@@ -353,7 +354,7 @@ namespace FTP
             loginResponse = getResponse(reader);
             Console.Write(loginResponse);
             loginResponseList = Regex.Split(loginResponse, "\\s+");
-            loginResponseCode = loginResponseList[0];
+            loginResponseCode = loginResponseList[loginResponseList.Length - 3];
 
             while (!loginResponseCode.Equals("230"))
             {
@@ -444,6 +445,7 @@ namespace FTP
                 }
                 catch (Exception e)
                 {
+                    Console.WriteLine("Exception " + e.GetType().ToString());
                     Console.WriteLine("Could not get the file - something went wrong");
                 }
 
