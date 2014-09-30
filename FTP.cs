@@ -131,6 +131,7 @@ namespace FTP
                     {
                         Console.WriteLine("The connection seems to have timed out,");
                         eof = true;
+                        break;
                     }
                     int cmd = -1;
                     string[] argv = Regex.Split(input, "\\s+");
