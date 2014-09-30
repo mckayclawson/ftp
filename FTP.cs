@@ -318,7 +318,7 @@ namespace FTP
             String loginResponse = "";
             String loginResponseCode = "";
             String[] loginResponseList;
-            do
+            while (!loginResponseCode.Equals("230", StringComparison.CurrentCultureIgnoreCase))
             {
                 Console.Write("Username: ");
                 String user = Console.ReadLine();
@@ -331,7 +331,7 @@ namespace FTP
                 Console.Write(loginResponse);
                 loginResponseList = Regex.Split(loginResponse, "\\s+");
                 loginResponseCode = loginResponseList[0];
-            } while (!loginResponseCode.Equals("230", StringComparison.CurrentCultureIgnoreCase));
+            } 
         }
 
         static void logout()
@@ -396,7 +396,7 @@ namespace FTP
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Could not get the file");
+                    Console.WriteLine("Could not get the file - something went wrong");
                 }
 
             }
