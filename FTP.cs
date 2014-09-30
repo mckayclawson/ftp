@@ -322,6 +322,7 @@ namespace FTP
             if (binary)
             {
                 sendCommand(writer, "TYPE I");
+                Console.WriteLine(getResponse(reader));
                 prepareForPassiveDataTransfer();
                 sendCommand(writer, "RETR " + fileName);
                 Console.Write(getResponse(reader));
@@ -341,6 +342,7 @@ namespace FTP
             else
             {
                 sendCommand(writer, "TYPE A");
+                Console.WriteLine(getResponse(reader));
                 prepareForPassiveDataTransfer();
                 sendCommand(writer, "RETR " + fileName);
                 Console.Write(getResponse(reader));
