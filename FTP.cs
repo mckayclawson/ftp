@@ -169,9 +169,16 @@ namespace FTP
                             break;
 
                         case CD:
-                            String path = argv[1];
-                            sendCommand(writer, "CWD " + path);
-                            Console.Write(getResponse(reader));
+                            if (argv.Length != 2)
+                            {
+                                Console.WriteLine("invalid path");
+                            }
+                            else
+                            {
+                                String path = argv[1];
+                                sendCommand(writer, "CWD " + path);
+                                Console.Write(getResponse(reader));
+                            }
                             break;
 
                         case CDUP:
@@ -198,8 +205,15 @@ namespace FTP
                             break;
 
                         case GET:
-                            String fileName = argv[1];
-                            getFile(fileName);
+                            if (argv.Length != 2)
+                            {
+                                Console.WriteLine("invalid fileName");
+                            }
+                            else
+                            {
+                                String fileName = argv[1];
+                                getFile(fileName);
+                            }
                             break;
 
                         case HELP:
@@ -237,9 +251,16 @@ namespace FTP
                             break;
 
                         case USER:
-                            String userName = argv[1];
-                            sendCommand(writer, "USER " + userName);
-                            Console.Write(getResponse(reader));
+                            if (argv.Length != 2)
+                            {
+                                Console.WriteLine("invalid fileName");
+                            }
+                            else
+                            {
+                                String userName = argv[1];
+                                sendCommand(writer, "USER " + userName);
+                                Console.Write(getResponse(reader));
+                            }
                             break;
 
                         default:
