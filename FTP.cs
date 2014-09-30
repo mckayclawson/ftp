@@ -244,23 +244,33 @@ namespace FTP
          * */
         static String getResponse(StreamReader r)
         {
-            String response = "";
-            while (!r.EndOfStream)
+            try
             {
-                String line = r.ReadLine();
-                response = response + line + "\n";
-                string[] words = Regex.Split(line, "\\s+");
-                if (!words[0].EndsWith("-"))
+                String response = "";
+                while (!r.EndOfStream)
                 {
-                    r.DiscardBufferedData();
-                    break;
+                    String line = r.ReadLine();
+                    response = response + line + "\n";
+                    string[] words = Regex.Split(line, "\\s+");
+                    if (!words[0].EndsWith("-"))
+                    {
+                        r.DiscardBufferedData();
+                        break;
+                    }
                 }
+                if (debug)
+                {
+                    Console.WriteLine("inside of getResponse and the response is: " + response);
+                }
+                return response;
             }
-            if (debug)
+            catch (Exception e)
             {
-                Console.WriteLine("inside of getResponse and the response is: " + response);
+                Console.WriteLine("Exception " + e.GetType().ToString());
+                Console.WriteLine("An Error Occured during send");
+
             }
-            return response;
+            return "";
         }
         /*
          * Sends the command to the controlStream
@@ -269,12 +279,20 @@ namespace FTP
          */ 
         static void sendCommand(StreamWriter w, String command)
         {
-            if (debug)
-            {
-                Console.WriteLine("inside of sendCommand and the command is: " + command);
+            try{
+                if (debug)
+                {
+                    Console.WriteLine("inside of sendCommand and the command is: " + command);
+                }
+                w.WriteLine(command);
+                w.Flush();
             }
-            w.WriteLine(command);
-            w.Flush();
+            catch (Exception e)
+            {
+                Console.WriteLine("Exception " + e.GetType().ToString());
+                Console.WriteLine("An Error Occured during send");
+                
+            }
         }
 
         /*
@@ -284,17 +302,27 @@ namespace FTP
          * */
         static void prepareForPassiveDataTransfer()
         {
-            sendCommand(writer, "PASV");
-            String dataAddress = getResponse(reader);
-            string[] addressParts = dataAddress.Split("()".ToCharArray())[1].Split(",".ToCharArray());
-            string dataHost = addressParts[0] + "." + addressParts[1] + "." + addressParts[2] + "." + addressParts[3];
-            int dataPort = int.Parse(addressParts[4]) * 256 + int.Parse(addressParts[5]);
-            if (debug)
+            try
             {
-                Console.WriteLine("inside of prepareForPassiveDataTransfer and the the dataConn is being made with: " + dataHost + " port " + dataPort);
+                sendCommand(writer, "PASV");
+                String dataAddress = getResponse(reader);
+                string[] addressParts = dataAddress.Split("()".ToCharArray())[1].Split(",".ToCharArray());
+                string dataHost = addressParts[0] + "." + addressParts[1] + "." + addressParts[2] + "." + addressParts[3];
+                int dataPort = int.Parse(addressParts[4]) * 256 + int.Parse(addressParts[5]);
+                if (debug)
+                {
+                    Console.WriteLine("inside of prepareForPassiveDataTransfer and the the dataConn is being made with: " + dataHost + " port " + dataPort);
+                }
+                dataConn = new TcpClient(dataHost, dataPort);
+                dataStream = dataConn.GetStream();
             }
-            dataConn = new TcpClient(dataHost, dataPort);
-            dataStream = dataConn.GetStream();
+            catch (Exception e)
+            {
+
+                Console.WriteLine("Exception " + e.GetType().ToString());
+                Console.WriteLine("An Error Occured during prep");
+                
+            }
         }
 
         /* I wished this would work
@@ -354,7 +382,7 @@ namespace FTP
             loginResponse = getResponse(reader);
             Console.Write(loginResponse);
             loginResponseList = Regex.Split(loginResponse, "\\s+");
-            loginResponseCode = loginResponseList[loginResponseList.Length - 3];
+            loginResponseCode = loginResponseList[loginResponseList.Length - 4];
 
             while (!loginResponseCode.Equals("230"))
             {
@@ -368,7 +396,7 @@ namespace FTP
                 loginResponse = getResponse(reader);
                 Console.Write(loginResponse);
                 loginResponseList = Regex.Split(loginResponse, "\\s+");
-                loginResponseCode = loginResponseList[0];
+                loginResponseCode = loginResponseList[loginResponseList.Length - 4];
             } 
         }
 
@@ -458,22 +486,31 @@ namespace FTP
          * */
         static void listDir()
         {
-            sendCommand(writer, "TYPE I");
-            Console.Write(getResponse(reader));
-            prepareForPassiveDataTransfer();
-	        //prepareForActiveDataTransfer();
-            sendCommand(writer, "LIST");
-            Console.Write(getResponse(reader));
-            dataReader = new StreamReader(dataStream);
-            String dirLine;
-            while ((dirLine = dataReader.ReadLine()) != null)
+            try
             {
-                Console.WriteLine(dirLine);
+                sendCommand(writer, "TYPE I");
+                Console.Write(getResponse(reader));
+                prepareForPassiveDataTransfer();
+                //prepareForActiveDataTransfer();
+                sendCommand(writer, "LIST");
+                Console.Write(getResponse(reader));
+                dataReader = new StreamReader(dataStream);
+                String dirLine;
+                while ((dirLine = dataReader.ReadLine()) != null)
+                {
+                    Console.WriteLine(dirLine);
+                }
+                dataReader.Close();
+                dataStream.Close();
+                dataConn.Close();
+                Console.Write(getResponse(reader));
             }
-            dataReader.Close();
-            dataStream.Close();
-            dataConn.Close();
-            Console.Write(getResponse(reader));
+            catch (Exception e)
+            {
+                Console.WriteLine("Exception " + e.GetType().ToString());
+                Console.WriteLine("An Error Occured during dir");
+                
+            }
         }
     }
 }
