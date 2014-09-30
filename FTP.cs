@@ -127,12 +127,22 @@ namespace FTP
                 // Keep going if we have not hit end of file
                 if (!eof && input.Length > 0)
                 {
-                    if (!conn.Connected)
+                    try
+                    {
+                        if (!conn.Connected)
+                        {
+                            Console.WriteLine("The connection seems to have timed out,");
+                            eof = true;
+                            break;
+                        }
+                    }
+                    catch
                     {
                         Console.WriteLine("The connection seems to have timed out,");
                         eof = true;
                         break;
                     }
+                    
                     int cmd = -1;
                     string[] argv = Regex.Split(input, "\\s+");
 
